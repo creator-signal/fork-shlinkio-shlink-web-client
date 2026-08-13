@@ -32,18 +32,17 @@ describe('<ServersDropdown />', () => {
     return checkAccessibility(rest);
   });
 
-  it('contains the list of servers and the "mange servers" button', async () => {
+  it('contains only the fixed server list', async () => {
     const { user } = setUp();
 
     await user.click(screen.getByText('Servers'));
     const items = screen.getAllByRole('menuitem');
 
-    // We have to add two for the "Manage servers" and the "Settings" menu items
-    expect(items).toHaveLength(Object.values(fallbackServers).length + 2);
+    // The outer navbar dropdown itself also has menuitem semantics.
+    expect(items).toHaveLength(Object.values(fallbackServers).length + 1);
     expect(items[1]).toHaveTextContent('foo');
     expect(items[2]).toHaveTextContent('bar');
     expect(items[3]).toHaveTextContent('baz');
-    expect(items[4]).toHaveTextContent('Manage servers');
   });
 
   it('contains a toggle with proper text', () => {
@@ -51,17 +50,11 @@ describe('<ServersDropdown />', () => {
     expect(screen.getByRole('button')).toHaveTextContent('Servers');
   });
 
-  it('contains a button to manage servers', async () => {
-    const { user } = setUp();
-
-    await user.click(screen.getByText('Servers'));
-    expect(screen.getByRole('menuitem', { name: 'Manage servers' })).toHaveAttribute('href', '/manage-servers');
-  });
-
-  it('shows only create link when no servers exist yet', async () => {
+  it('does not expose server creation when the session is still loading', async () => {
     const { user } = setUp({});
 
     await user.click(screen.getByText('Servers'));
-    expect(screen.getByRole('menuitem', { name: 'Add a server' })).toBeInTheDocument();
+    expect(screen.getAllByRole('menuitem')).toHaveLength(1);
+    expect(screen.queryByText(/Add a server/i)).not.toBeInTheDocument();
   });
 });

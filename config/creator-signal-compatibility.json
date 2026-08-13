@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schemaVersion": 1,
+  "creatorSignalRelease": "4.8.1-cs.1",
+  "upstreamLine": "shlinkio/shlink-web-client:develop",
+  "server": {
+    "repository": "creator-signal/fork-shlinkio-shlink",
+    "minimumCreatorSignalRelease": "5.2.0-cs.1",
+    "supportedVersions": ">=5.2.0-cs.1 <6.0.0",
+    "restApiMajor": 3,
+    "image": "ghcr.io/creator-signal/shlink"
+  },
+  "authentication": {
+    "protocol": "OIDC Authorization Code with PKCE",
+    "provider": "ZITADEL",
+    "requiredRole": "platform:operator",
+    "session": "opaque HttpOnly SameSite=Lax cookie with encrypted Redis record"
+  },
+  "credentialBoundary": "Shlink management key is read by the BFF from a provider secret file and is never exposed to the browser"
+}

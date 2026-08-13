@@ -6,3 +6,8 @@
 ./shlink-web-client.gif
 ./dist
 ./docs
+./server-dist
+./.env*
+*.pem
+*.key
+*secret*

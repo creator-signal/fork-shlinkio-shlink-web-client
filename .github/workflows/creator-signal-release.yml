@@ -38,6 +38,10 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.sha }}
+      - name: Require the exact namespaced main revision
+        run: |
+          git fetch --no-tags origin creator-signal/main
+          test "$GITHUB_SHA" = "$(git rev-parse origin/creator-signal/main)"
       - name: Validate version, uniqueness, and readiness
         id: gate
         env:
@@ -56,6 +60,10 @@ jobs:
           }
           if (policy.productionReady !== true) {
             throw new Error(`Release is blocked: ${policy.reason ?? 'production readiness has not been accepted'}`);
+          }
+          const compatibility = JSON.parse(await readFile('config/creator-signal-compatibility.json', 'utf8'));
+          if (policy.releaseVersion !== process.env.RELEASE_VERSION || compatibility.creatorSignalRelease !== process.env.RELEASE_VERSION) {
+            throw new Error('Requested version must match both Creator Signal release manifests');
           }
           NODE
           if git rev-parse "refs/tags/creator-signal-v$RELEASE_VERSION" >/dev/null 2>&1; then
@@ -76,11 +84,18 @@ jobs:
         env:
           VERSION: ${{ inputs.version }}
         run: node --run build:dist
+      - name: Add compatibility and checksum evidence
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          cp config/creator-signal-compatibility.json "dist/shlink-web-client_${RELEASE_VERSION}_compatibility.json"
+          cd dist
+          sha256sum shlink-web-client_* > "shlink-web-client_${RELEASE_VERSION}_checksums.txt"
       - name: Upload validated distributable assets
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: creator-signal-shlink-web-client-dist
-          path: dist/shlink-web-client_*_dist.zip
+          path: dist/shlink-web-client_*
           if-no-files-found: error
 
   build:
@@ -222,6 +237,8 @@ jobs:
         run: |
           gh release create "creator-signal-v$RELEASE_VERSION" \
             release-artifacts/creator-signal-shlink-web-client-dist/shlink-web-client_*_dist.zip \
+            release-artifacts/creator-signal-shlink-web-client-dist/shlink-web-client_*_compatibility.json \
+            release-artifacts/creator-signal-shlink-web-client-dist/shlink-web-client_*_checksums.txt \
             release-artifacts/creator-signal-shlink-web-client-amd64/*.spdx.json \
             release-artifacts/creator-signal-shlink-web-client-arm64/*.spdx.json \
             "shlink-web-client-${RELEASE_VERSION}.digest.txt" \
