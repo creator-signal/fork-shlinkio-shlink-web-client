@@ -3,8 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { NavBar } from '@shlinkio/shlink-frontend-kit';
 import type { FC } from 'react';
 import { Link, useLocation } from 'react-router';
-import { ServersDropdown } from '../servers/ServersDropdown';
 import { logout } from '../auth/session';
+import { ServersDropdown } from '../servers/ServersDropdown';
 import { ShlinkLogo } from './img/ShlinkLogo';
 
 export const MainHeader: FC = () => {

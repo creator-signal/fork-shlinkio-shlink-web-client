@@ -28,7 +28,7 @@ createRoot(document.getElementById('root')!).render(
 
 // Remove caches and registrations left behind by upstream PWA builds. Authenticated
 // application data must never be served from a browser-managed offline cache.
-void navigator.serviceWorker?.getRegistrations().then((registrations) =>
-  Promise.all(registrations.map((registration) => registration.unregister())),
-);
+void navigator.serviceWorker
+  ?.getRegistrations()
+  .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())));
 void window.caches?.keys().then((keys) => Promise.all(keys.map((key) => window.caches.delete(key))));

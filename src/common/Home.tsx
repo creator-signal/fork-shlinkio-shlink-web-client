@@ -41,7 +41,9 @@ export const Home: FC = withoutSelectedServer(() => {
             ) : (
               <div className="p-6 text-center flex flex-col gap-12 text-xl">
                 <p>Loading the Creator Signal Shlink service...</p>
-                <p className="text-sm">If this remains visible, check the service readiness endpoint and OIDC session.</p>
+                <p className="text-sm">
+                  If this remains visible, check the service readiness endpoint and OIDC session.
+                </p>
               </div>
             )}
           </div>

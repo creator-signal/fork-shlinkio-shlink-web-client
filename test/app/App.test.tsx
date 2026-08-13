@@ -1,7 +1,7 @@
-import type { HttpClient } from '../../src/api/services/HttpClient';
 import { act, screen } from '@testing-library/react';
 import { fromPartial } from '@total-typescript/shoehorn';
 import { MemoryRouter } from 'react-router';
+import type { HttpClient } from '../../src/api/services/HttpClient';
 import { App } from '../../src/app/App';
 import { ContainerProvider } from '../../src/container/context';
 import type { ServerWithId } from '../../src/servers/data';
