@@ -12,6 +12,8 @@
 
 A ReactJS-based progressive web application for [Shlink](https://shlink.io).
 
+> **Creator Signal fork:** the upstream static client stores Shlink API keys in browser local storage and is not approved for Creator Signal production use in its current form. Creator Signal branch ownership, the fail-closed release gate, and the server-side credential migration are documented in [docs/creator-signal-fork.md](docs/creator-signal-fork.md) and [issue #1](https://github.com/creator-signal/fork-shlinkio-shlink-web-client/issues/1).
+
 ![shlink-web-client](shlink-web-client.gif)
 
 > If you are trying to find out how to run the project in development mode or how to provide contributions, read the [CONTRIBUTING](CONTRIBUTING.md) doc.
