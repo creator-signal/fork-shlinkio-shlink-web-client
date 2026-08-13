@@ -1,0 +1,232 @@
+name: Creator Signal release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Semantic version without a leading v, for example 1.2.3
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+  attestations: write
+
+concurrency:
+  group: creator-signal-shlink-web-client-release-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate release source
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.gate.outputs.version }}
+    steps:
+      - name: Require the Creator Signal release branch
+        env:
+          RELEASE_REF: ${{ github.ref }}
+        run: |
+          if [ "$RELEASE_REF" != 'refs/heads/creator-signal/main' ]; then
+            echo 'Releases must be dispatched from creator-signal/main.' >&2
+            exit 1
+          fi
+      - name: Check out the exact release revision
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+      - name: Validate version, uniqueness, and readiness
+        id: gate
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          if ! printf '%s' "$RELEASE_VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo 'version must be a semantic version without a leading v' >&2
+            exit 1
+          fi
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+
+          const policy = JSON.parse(await readFile('config/creator-signal-release-policy.json', 'utf8'));
+          if (policy.schema !== 'creator-signal.shlink-web-client.release-policy/v1') {
+            throw new Error('Unrecognised Creator Signal release policy schema');
+          }
+          if (policy.productionReady !== true) {
+            throw new Error(`Release is blocked: ${policy.reason ?? 'production readiness has not been accepted'}`);
+          }
+          NODE
+          if git rev-parse "refs/tags/creator-signal-v$RELEASE_VERSION" >/dev/null 2>&1; then
+            echo "creator-signal-v$RELEASE_VERSION already exists" >&2
+            exit 1
+          fi
+          echo "version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 26.x
+          cache: npm
+      - name: Install and audit locked dependencies
+        run: npm ci && npm audit --audit-level=high
+      - name: Revalidate the release source
+        run: npm run cs && npm run types && npm run test:ci
+      - name: Build distributable release assets
+        env:
+          VERSION: ${{ inputs.version }}
+        run: node --run build:dist
+      - name: Upload validated distributable assets
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: creator-signal-shlink-web-client-dist
+          path: dist/shlink-web-client_*_dist.zip
+          if-no-files-found: error
+
+  build:
+    name: Build ${{ matrix.platform }} image
+    needs: validate
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            artifact: amd64
+          - platform: linux/arm64
+            artifact: arm64
+    steps:
+      - name: Check out the exact release revision
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.sha }}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - name: Build the platform image for validation
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          outputs: type=docker,dest=/tmp/shlink-web-client-${{ matrix.artifact }}.tar
+          platforms: ${{ matrix.platform }}
+          tags: ghcr.io/creator-signal/shlink-web-client:release-${{ matrix.artifact }}-${{ github.sha }}
+          build-args: |
+            VERSION=${{ needs.validate.outputs.version }}
+          cache-from: type=gha,scope=creator-signal-web-client-release-${{ matrix.artifact }}
+          cache-to: type=gha,mode=max,scope=creator-signal-web-client-release-${{ matrix.artifact }}
+      - name: Load the platform image for inspection
+        run: docker load --input /tmp/shlink-web-client-${{ matrix.artifact }}.tar
+      - name: Scan the platform image archive
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.73.0
+          image-ref: ghcr.io/creator-signal/shlink-web-client:release-${{ matrix.artifact }}-${{ github.sha }}
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+      - name: Generate the platform SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          image: ghcr.io/creator-signal/shlink-web-client:release-${{ matrix.artifact }}-${{ github.sha }}
+          format: spdx-json
+          output-file: shlink-web-client-${{ needs.validate.outputs.version }}-${{ matrix.artifact }}.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+      - name: Upload validated image and SBOM
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: creator-signal-shlink-web-client-${{ matrix.artifact }}
+          path: |
+            /tmp/shlink-web-client-${{ matrix.artifact }}.tar
+            shlink-web-client-${{ needs.validate.outputs.version }}-${{ matrix.artifact }}.spdx.json
+          if-no-files-found: error
+
+  publish:
+    name: Publish immutable release
+    needs:
+      - validate
+      - build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Download validated release artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          path: release-artifacts
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Refuse to overwrite an existing image version
+        env:
+          RELEASE_VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          if docker buildx imagetools inspect "ghcr.io/creator-signal/shlink-web-client:$RELEASE_VERSION" >/dev/null 2>&1; then
+            echo "image version $RELEASE_VERSION already exists" >&2
+            exit 1
+          fi
+      - name: Push the validated platform images by digest
+        env:
+          GHCR_REPOSITORY: ghcr.io/creator-signal/shlink-web-client
+        run: |
+          for artifact in amd64 arm64; do
+            docker load --input "release-artifacts/creator-signal-shlink-web-client-$artifact/shlink-web-client-$artifact.tar"
+            docker push "$GHCR_REPOSITORY:release-$artifact-$GITHUB_SHA"
+          done
+      - name: Publish the multi-platform release manifest
+        id: publish
+        env:
+          GHCR_REPOSITORY: ghcr.io/creator-signal/shlink-web-client
+          RELEASE_VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          docker buildx imagetools create \
+            --tag "$GHCR_REPOSITORY:$RELEASE_VERSION" \
+            --tag "$GHCR_REPOSITORY:creator-signal-v$RELEASE_VERSION" \
+            --tag "$GHCR_REPOSITORY:$GITHUB_SHA" \
+            "$GHCR_REPOSITORY:release-amd64-$GITHUB_SHA" \
+            "$GHCR_REPOSITORY:release-arm64-$GITHUB_SHA"
+          digest=$(docker buildx imagetools inspect "$GHCR_REPOSITORY:$RELEASE_VERSION" --format '{{json .Manifest}}' | jq -r '.digest')
+          test -n "$digest" && test "$digest" != 'null'
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+      - name: Attest the published image
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-name: ghcr.io/creator-signal/shlink-web-client
+          subject-digest: ${{ steps.publish.outputs.digest }}
+          push-to-registry: true
+      - name: Write release evidence
+        env:
+          IMAGE_DIGEST: ${{ steps.publish.outputs.digest }}
+          RELEASE_VERSION: ${{ needs.validate.outputs.version }}
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          {
+            echo 'Creator Signal Shlink web client release.'
+            echo
+            echo "Source commit: $RELEASE_SHA"
+            echo "Image: ghcr.io/creator-signal/shlink-web-client:$RELEASE_VERSION"
+            echo "Digest: $IMAGE_DIGEST"
+            echo
+            echo 'Production stacks must pin the digest, not a mutable tag.'
+          } > release-notes.md
+          printf '%s\n' "$IMAGE_DIGEST" > "shlink-web-client-${RELEASE_VERSION}.digest.txt"
+      - name: Create the GitHub release last
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          gh release create "creator-signal-v$RELEASE_VERSION" \
+            release-artifacts/creator-signal-shlink-web-client-dist/shlink-web-client_*_dist.zip \
+            release-artifacts/creator-signal-shlink-web-client-amd64/*.spdx.json \
+            release-artifacts/creator-signal-shlink-web-client-arm64/*.spdx.json \
+            "shlink-web-client-${RELEASE_VERSION}.digest.txt" \
+            --target "$GITHUB_SHA" \
+            --title "Creator Signal v$RELEASE_VERSION" \
+            --notes-file release-notes.md \
+            --generate-notes \
+            --latest=false
