@@ -10,16 +10,21 @@ function zipDist(version) {
   const zip = new AdmZip();
 
   try {
+    fs.mkdirSync('./dist', { recursive: true });
     if (fs.existsSync(versionFileName)) {
       fs.unlinkSync(versionFileName);
     }
 
-    zip.addLocalFolder('./build', fileBaseName);
+    zip.addLocalFolder('./build', `${fileBaseName}/build`);
+    zip.addLocalFolder('./server-dist', `${fileBaseName}/server-dist`);
+    for (const file of ['package.json', 'package-lock.json', 'README.md', 'LICENSE']) {
+      zip.addLocalFile(file, fileBaseName);
+    }
     zip.writeZip(versionFileName);
     console.log(chalk.green('Dist file properly generated'));
   } catch (e) {
     console.log(chalk.red('An error occurred while generating dist file'));
-    console.log(e);
+    throw e;
   }
   console.log();
 }

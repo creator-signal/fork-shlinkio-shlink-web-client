@@ -3,12 +3,10 @@ import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router';
 import pack from '../package.json';
 import { App } from './app/App';
-import { appUpdateAvailable } from './app/reducers/appUpdates';
 import { ErrorHandler } from './common/ErrorHandler';
 import { ScrollToTop } from './common/ScrollToTop';
 import { container } from './container';
 import { ContainerProvider } from './container/context';
-import { register as registerServiceWorker } from './serviceWorkerRegistration';
 import { setUpStore } from './store';
 import './tailwind.css';
 
@@ -28,9 +26,9 @@ createRoot(document.getElementById('root')!).render(
   </ContainerProvider>,
 );
 
-// Learn more about service workers: https://cra.link/PWA
-registerServiceWorker({
-  onUpdate() {
-    store.dispatch(appUpdateAvailable());
-  },
-});
+// Remove caches and registrations left behind by upstream PWA builds. Authenticated
+// application data must never be served from a browser-managed offline cache.
+void navigator.serviceWorker
+  ?.getRegistrations()
+  .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())));
+void window.caches?.keys().then((keys) => Promise.all(keys.map((key) => window.caches.delete(key))));

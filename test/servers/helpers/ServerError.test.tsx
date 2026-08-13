@@ -26,11 +26,13 @@ describe('<ServerError />', () => {
     [
       fromPartial<NotFoundServer>({}),
       {
-        found: ['Could not find this Shlink server.'],
+        found: [
+          'Could not find this Shlink server.',
+          'The server connection is managed by the Creator Signal deployment configuration.',
+        ],
         notFound: [
           'Oops! Could not connect to this Shlink server.',
           'Make sure you have internet connection, and the server is properly configured and on-line.',
-          /^Alternatively, if you think you may have misconfigured this server/,
         ],
       },
     ],
@@ -40,7 +42,7 @@ describe('<ServerError />', () => {
         found: [
           'Oops! Could not connect to this Shlink server.',
           'Make sure you have internet connection, and the server is properly configured and on-line.',
-          /^Alternatively, if you think you may have misconfigured this server/,
+          'The server connection is managed by the Creator Signal deployment configuration.',
         ],
         notFound: ['Could not find this Shlink server.'],
       },

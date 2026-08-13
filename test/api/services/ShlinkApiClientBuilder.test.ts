@@ -1,5 +1,5 @@
-import type { HttpClient } from '@shlinkio/shlink-js-sdk';
 import { fromPartial } from '@total-typescript/shoehorn';
+import type { HttpClient } from '../../../src/api/services/HttpClient';
 import { buildShlinkApiClient } from '../../../src/api/services/ShlinkApiClientBuilder';
 import type { ReachableServer, SelectedServer } from '../../../src/servers/data';
 
@@ -11,20 +11,17 @@ describe('ShlinkApiClientBuilder', () => {
     return (selectedServer: SelectedServer) => builder(() => fromPartial({ selectedServer }));
   };
 
-  it('creates new instances when provided params are different', async () => {
+  it('uses one BFF client for the fixed server', () => {
     const builder = createBuilder();
-    const firstApiClient = builder(server({ url: 'foo', apiKey: 'bar' }));
-    const secondApiClient = builder(server({ url: 'bar', apiKey: 'bar' }));
-    const thirdApiClient = builder(server({ url: 'bar', apiKey: 'foo' }));
+    const firstApiClient = builder(server({ id: 'creator-signal' }));
+    const secondApiClient = builder(server({ id: 'creator-signal' }));
 
-    expect(firstApiClient).not.toBe(secondApiClient);
-    expect(firstApiClient).not.toBe(thirdApiClient);
-    expect(secondApiClient).not.toBe(thirdApiClient);
+    expect(firstApiClient).toBe(secondApiClient);
   });
 
   it('returns existing instances when provided params are the same', () => {
     const builder = createBuilder();
-    const selectedServer = server({ url: 'foo', apiKey: 'bar' });
+    const selectedServer = server({ id: 'creator-signal' });
 
     const firstApiClient = builder(selectedServer);
     const secondApiClient = builder(selectedServer);
@@ -35,43 +32,13 @@ describe('ShlinkApiClientBuilder', () => {
     expect(secondApiClient).toBe(thirdApiClient);
   });
 
-  it('does not fetch from state when provided param is already a server', async () => {
-    const url = 'the_url';
-    const apiKey = 'the_api_key';
+  it('always calls the same-origin BFF without credentials', async () => {
     const jsonRequest = vi.fn();
     const httpClient = fromPartial<HttpClient>({ jsonRequest });
-    const apiClient = createBuilder(httpClient)(server({ url, apiKey }));
+    const apiClient = createBuilder(httpClient)(server({ id: 'creator-signal' }));
 
     await apiClient.health();
 
-    expect(jsonRequest).toHaveBeenCalledWith(
-      expect.stringMatching(new RegExp(`^${url}`)),
-      expect.objectContaining({
-        credentials: undefined,
-        headers: {
-          'X-Api-Key': apiKey,
-        },
-      }),
-    );
-  });
-
-  it('includes credentials when forwarding is enabled', async () => {
-    const url = 'the_url';
-    const apiKey = 'the_api_key';
-    const jsonRequest = vi.fn();
-    const httpClient = fromPartial<HttpClient>({ jsonRequest });
-    const apiClient = createBuilder(httpClient)(server({ url, apiKey, forwardCredentials: true }));
-
-    await apiClient.health();
-
-    expect(jsonRequest).toHaveBeenCalledWith(
-      expect.stringMatching(new RegExp(`^${url}`)),
-      expect.objectContaining({
-        credentials: 'include',
-        headers: {
-          'X-Api-Key': apiKey,
-        },
-      }),
-    );
+    expect(jsonRequest).toHaveBeenCalledWith('/api/shlink/rest/v3/health', { signal: undefined });
   });
 });

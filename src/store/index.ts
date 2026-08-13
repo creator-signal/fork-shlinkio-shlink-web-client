@@ -6,7 +6,7 @@ import { migrateDeprecatedSettings } from '../settings/helpers';
 import { initReducers } from './reducers';
 
 const localStorageConfig: RLSOptions = {
-  states: ['settings', 'servers'],
+  states: ['settings'],
   namespace: 'shlink',
   namespaceSeparator: '.',
   debounce: 300,
