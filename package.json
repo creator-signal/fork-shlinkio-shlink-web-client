@@ -7,7 +7,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "cs": "node --run lint && node --run format:check",
+    "cs": "node --run lint && node --run format:check && node --run verify:release-workflow",
     "cs:fix": "node --run lint:fix && node --run format",
     "lint": "oxlint src server test config/test ./*.config.ts",
     "lint:fix": "node --run lint -- --fix",
@@ -25,6 +25,7 @@
     "test:watch": "vitest --watch",
     "test:ci": "node --run test:browser -- --coverage && node --run test:server",
     "verify:browser-boundary": "node scripts/verify-browser-boundary.mjs",
+    "verify:release-workflow": "node scripts/verify-release-workflow.mjs",
     "test:verbose": "node --run test -- --verbose"
   },
   "dependencies": {
