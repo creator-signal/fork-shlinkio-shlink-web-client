@@ -34,16 +34,16 @@ describe('<Home />', () => {
       },
       3,
     ],
-    [{}, 2],
-  ])('shows link to create or set-up server only when no servers exist', (servers, expectedServers) => {
+    [{}, 0],
+  ])('shows fixed servers or the session-loading state', (servers, expectedServers) => {
     setUp(servers);
-    const links = screen.getAllByRole('link');
+    const links = screen.queryAllByRole('link');
 
     expect(links).toHaveLength(expectedServers);
 
     if (Object.keys(servers).length === 0) {
-      expect(screen.getByText('This application will help you manage your Shlink servers.')).toBeInTheDocument();
-      expect(screen.getByText('Learn more about Shlink')).toBeInTheDocument();
+      expect(screen.getByText('Loading the Creator Signal Shlink service...')).toBeInTheDocument();
+      expect(screen.queryByText(/Add a server/i)).not.toBeInTheDocument();
     }
   });
 });

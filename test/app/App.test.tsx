@@ -1,4 +1,4 @@
-import type { HttpClient } from '@shlinkio/shlink-js-sdk';
+import type { HttpClient } from '../../src/api/services/HttpClient';
 import { act, screen } from '@testing-library/react';
 import { fromPartial } from '@total-typescript/shoehorn';
 import { MemoryRouter } from 'react-router';
@@ -34,7 +34,6 @@ describe('<App />', () => {
               def456: fromPartial<ServerWithId>({ id: 'def456', name: 'def456 server' }),
             },
             settings: fromPartial({}),
-            appUpdated: false,
           },
         },
       ),
@@ -45,10 +44,6 @@ describe('<App />', () => {
   it.each([
     ['/settings/general', 'User interface'],
     ['/settings/short-urls', 'Short URLs form'],
-    ['/manage-servers', 'Add a server'],
-    ['/server/create', 'Add new server'],
-    ['/server/abc123/edit', 'Edit "abc123 server"'],
-    ['/server/def456/edit', 'Edit "def456 server"'],
     ['/server/abc123/foo', 'ShlinkWebComponentContainer'],
     ['/server/def456/bar', 'ShlinkWebComponentContainer'],
     ['/other', 'Oops! We could not find requested route.'],

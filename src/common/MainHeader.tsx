@@ -1,9 +1,10 @@
-import { faCogs as cogsIcon } from '@fortawesome/free-solid-svg-icons';
+import { faCogs as cogsIcon, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { NavBar } from '@shlinkio/shlink-frontend-kit';
 import type { FC } from 'react';
 import { Link, useLocation } from 'react-router';
 import { ServersDropdown } from '../servers/ServersDropdown';
+import { logout } from '../auth/session';
 import { ShlinkLogo } from './img/ShlinkLogo';
 
 export const MainHeader: FC = () => {
@@ -28,6 +29,16 @@ export const MainHeader: FC = () => {
         <FontAwesomeIcon icon={cogsIcon} /> Settings
       </NavBar.MenuItem>
       <ServersDropdown />
+      <NavBar.MenuItem
+        to="/auth/logout"
+        onClick={(event) => {
+          event.preventDefault();
+          void logout();
+        }}
+        className="flex items-center gap-1.5"
+      >
+        <FontAwesomeIcon icon={faSignOutAlt} /> Sign out
+      </NavBar.MenuItem>
     </NavBar>
   );
 };

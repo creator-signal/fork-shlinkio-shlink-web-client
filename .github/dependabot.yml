@@ -38,9 +38,6 @@ updates:
         patterns:
           - 'vitest'
           - '@vitest/*'
-      workbox:
-        patterns:
-          - 'workbox*'
       tailwindcss:
         patterns:
           - 'tailwindcss'

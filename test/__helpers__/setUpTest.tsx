@@ -1,4 +1,4 @@
-import type { ShlinkApiClient } from '@shlinkio/shlink-js-sdk';
+import type { ShlinkApiClient } from '@shlinkio/shlink-js-sdk/api-contract';
 import type { RenderOptions } from '@testing-library/react';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
