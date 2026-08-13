@@ -1,10 +1,7 @@
-import { faExternalLinkAlt, faPlus } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Button, Card } from '@shlinkio/shlink-frontend-kit';
+import { Card } from '@shlinkio/shlink-frontend-kit';
 import { clsx } from 'clsx';
 import type { FC } from 'react';
 import { useEffect } from 'react';
-import { ExternalLink } from 'react-external-link';
 import { useNavigate } from 'react-router';
 import { withoutSelectedServer } from '../servers/helpers/withoutSelectedServer';
 import { useServers } from '../servers/reducers/servers';
@@ -18,7 +15,7 @@ export const Home: FC = withoutSelectedServer(() => {
   const hasServers = serversList.length > 0;
 
   useEffect(() => {
-    // Try to redirect to the first server marked as auto-connect
+    // The deployment supplies exactly one server and marks it for automatic connection.
     const autoConnectServer = serversList.find(({ autoConnect }) => autoConnect);
     if (autoConnectServer) {
       navigate(`/server/${autoConnectServer.id}`);
@@ -43,19 +40,9 @@ export const Home: FC = withoutSelectedServer(() => {
               <ServersListGroup servers={serversList} />
             ) : (
               <div className="p-6 text-center flex flex-col gap-12 text-xl">
-                <p>This application will help you manage your Shlink servers.</p>
-                <p>
-                  <Button to="/server/create" size="lg" inline>
-                    <FontAwesomeIcon icon={faPlus} widthAuto /> Add a server
-                  </Button>
-                </p>
-                <p>
-                  <ExternalLink href="https://shlink.io/documentation">
-                    <small>
-                      <span className="mr-2">Learn more about Shlink</span>
-                      <FontAwesomeIcon icon={faExternalLinkAlt} />
-                    </small>
-                  </ExternalLink>
+                <p>Loading the Creator Signal Shlink service...</p>
+                <p className="text-sm">
+                  If this remains visible, check the service readiness endpoint and OIDC session.
                 </p>
               </div>
             )}

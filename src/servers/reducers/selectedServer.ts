@@ -1,6 +1,6 @@
 import { createAction, createSlice } from '@reduxjs/toolkit';
 import { memoizeWith } from '@shlinkio/data-manipulation';
-import type { ShlinkHealth } from '@shlinkio/shlink-web-component/api-contract';
+import type { ShlinkHealth } from '@shlinkio/shlink-js-sdk/api-contract';
 import { useCallback } from 'react';
 import type { ShlinkApiClientBuilder } from '../../api/services/ShlinkApiClientBuilder';
 import { useDependencies } from '../../container/context';
@@ -19,7 +19,7 @@ const versionToSemVer = (version: string) =>
   toSemVer(version === LATEST_VERSION_CONSTRAINT ? MAX_FALLBACK_VERSION : version, MIN_FALLBACK_VERSION);
 
 const getServerVersion = memoizeWith(
-  (server: ServerWithId) => `${server.id}_${server.url}_${server.apiKey}`,
+  (server: ServerWithId) => server.id,
   async (_server: ServerWithId, health: () => Promise<ShlinkHealth>) =>
     health().then(({ version }) => ({
       version: versionToSemVer(version),

@@ -1,27 +1,13 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { playwright } from '@vitest/browser-playwright';
-import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig } from 'vitest/config';
-import { manifest } from './manifest';
 import pack from './package.json' with { type: 'json' };
 
 const homepage = pack.homepage?.trim();
 
 export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss(),
-    VitePWA({
-      mode: process.env.NODE_ENV === 'development' ? 'development' : 'production',
-      strategies: 'injectManifest',
-      srcDir: './src',
-      filename: 'service-worker.ts',
-      injectRegister: false,
-      manifestFilename: 'manifest.json',
-      manifest,
-    }),
-  ],
+  plugins: [react(), tailwindcss()],
 
   build: {
     outDir: 'build',
@@ -39,6 +25,8 @@ export default defineConfig({
 
   // Vitest config
   test: {
+    include: ['test/**/*.test.{ts,tsx}'],
+    exclude: ['test/server/**'],
     // Run tests in an actual browser
     browser: {
       provider: playwright({
@@ -61,7 +49,6 @@ export default defineConfig({
         '!src/reducers/index.ts',
         '!src/**/provideServices.ts',
         '!src/container/*.ts',
-        '!src/utils/helpers/sw.ts',
       ],
 
       // Required code coverage. Lower than this will make the check fail

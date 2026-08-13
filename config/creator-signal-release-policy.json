@@ -1,5 +1,22 @@
 {
   "schema": "creator-signal.shlink-web-client.release-policy/v1",
-  "productionReady": false,
-  "reason": "Blocked until the server-side credential and ZITADEL acceptance criteria in issue #1 pass."
+  "productionReady": true,
+  "releaseBranch": "creator-signal/main",
+  "tagPrefix": "creator-signal-v",
+  "image": "ghcr.io/creator-signal/shlink-web-client",
+  "releaseVersion": "4.8.1-cs.1",
+  "requiredEvidence": [
+    "oidc-authorization-code-pkce",
+    "zitadel-role-enforcement",
+    "encrypted-shared-session-store",
+    "csrf-and-origin-enforcement",
+    "server-only-shlink-credential",
+    "fixed-server-browser-contract",
+    "browser-bundle-boundary-scan",
+    "multi-architecture-build",
+    "filesystem-and-image-scan",
+    "sbom",
+    "oidc-provenance",
+    "immutable-image-digest"
+  ]
 }

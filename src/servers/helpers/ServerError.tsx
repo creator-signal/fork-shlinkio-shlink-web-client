@@ -1,15 +1,10 @@
-import { Card, Message } from '@shlinkio/shlink-frontend-kit';
+import { Message } from '@shlinkio/shlink-frontend-kit';
 import type { FC } from 'react';
-import { Link } from 'react-router';
 import { NoMenuLayout } from '../../common/NoMenuLayout';
 import { isServerWithId } from '../data';
-import { DeleteServerButton } from '../DeleteServerButton';
 import { useSelectedServer } from '../reducers/selectedServer';
-import { useServers } from '../reducers/servers';
-import { ServersListGroup } from '../ServersListGroup';
 
 export const ServerError: FC = () => {
-  const { servers } = useServers();
   const { selectedServer } = useSelectedServer();
 
   return (
@@ -25,21 +20,7 @@ export const ServerError: FC = () => {
           )}
         </Message>
 
-        <p className="text-xl">
-          These are the Shlink servers currently configured. Choose one of them or{' '}
-          <Link to="/server/create">add a new one</Link>.
-        </p>
-        <Card className="w-full max-w-100 overflow-hidden">
-          <ServersListGroup borderless servers={Object.values(servers)} />
-        </Card>
-
-        {isServerWithId(selectedServer) && (
-          <p className="text-xl">
-            Alternatively, if you think you may have misconfigured this server, you can{' '}
-            <DeleteServerButton server={selectedServer}>remove it</DeleteServerButton> or&nbsp;
-            <Link to={`/server/${selectedServer.id}/edit?reconnect=true`}>edit it</Link>.
-          </p>
-        )}
+        <p className="text-xl">The server connection is managed by the Creator Signal deployment configuration.</p>
       </div>
     </NoMenuLayout>
   );
