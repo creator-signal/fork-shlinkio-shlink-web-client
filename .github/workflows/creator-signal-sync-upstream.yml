@@ -1,0 +1,54 @@
+name: Sync upstream mirror branches
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Upstream mirror branch to fast-forward
+        required: true
+        default: both
+        type: choice
+        options:
+          - both
+          - develop
+          - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: creator-signal-shlink-web-client-upstream-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Fast-forward upstream mirrors
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out the Creator Signal control branch
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+      - name: Fast-forward selected mirror branches
+        env:
+          SYNC_BRANCH: ${{ inputs.branch }}
+        run: |
+          git remote add upstream https://github.com/shlinkio/shlink-web-client.git
+          git fetch --prune origin develop main
+          git fetch --prune upstream develop main
+
+          sync_branch() {
+            branch="$1"
+            if ! git merge-base --is-ancestor "origin/$branch" "upstream/$branch"; then
+              echo "origin/$branch is not an ancestor of upstream/$branch; refusing a non-fast-forward sync" >&2
+              exit 1
+            fi
+            git push origin "upstream/$branch:refs/heads/$branch"
+          }
+
+          if [ "$SYNC_BRANCH" = 'both' ] || [ "$SYNC_BRANCH" = 'develop' ]; then
+            sync_branch develop
+          fi
+          if [ "$SYNC_BRANCH" = 'both' ] || [ "$SYNC_BRANCH" = 'main' ]; then
+            sync_branch main
+          fi
