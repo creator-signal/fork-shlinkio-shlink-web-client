@@ -11,6 +11,7 @@ const requiredFragments = [
   'docker load --input "release-artifacts/creator-signal-shlink-web-client-$artifact/shlink-web-client-$artifact.tar"',
   'release-artifacts/creator-signal-shlink-web-client-amd64/*.spdx.json',
   'release-artifacts/creator-signal-shlink-web-client-arm64/*.spdx.json',
+  '--repo "$GITHUB_REPOSITORY"',
 ];
 
 for (const fragment of requiredFragments) {
