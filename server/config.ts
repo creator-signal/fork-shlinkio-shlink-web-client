@@ -64,9 +64,15 @@ const readSecret = (env: NodeJS.ProcessEnv, name: string, fallbackPath: string, 
   return value;
 };
 
-const validateUrl = (value: string, name: string, allowedProtocols: string[]): URL => {
+const validateUrl = (
+  value: string,
+  name: string,
+  allowedProtocols: string[],
+  options: { allowCredentials?: boolean } = {},
+): URL => {
   const url = new URL(value);
-  if (!allowedProtocols.includes(url.protocol) || url.username || url.password || url.search || url.hash) {
+  const credentialsForbidden = !options.allowCredentials && (url.username || url.password);
+  if (!allowedProtocols.includes(url.protocol) || credentialsForbidden || url.search || url.hash) {
     throw new Error(`${name} is not an allowed URL`);
   }
   return url;
@@ -99,6 +105,7 @@ export const loadRuntimeConfig = (env: NodeJS.ProcessEnv = process.env): Runtime
     readSecret(env, 'REDIS_URL', '/run/secrets/provider/shlink-web-redis-url'),
     'REDIS_URL_FILE',
     ['redis:', 'rediss:'],
+    { allowCredentials: true },
   );
   const oidcRedirectUri = new URL('/auth/callback', publicOrigin).href;
   const oidcPostLogoutRedirectUri = new URL('/auth/logout/callback', publicOrigin).href;
