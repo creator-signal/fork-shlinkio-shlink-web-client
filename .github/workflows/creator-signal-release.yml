@@ -242,6 +242,7 @@ jobs:
             release-artifacts/creator-signal-shlink-web-client-amd64/*.spdx.json \
             release-artifacts/creator-signal-shlink-web-client-arm64/*.spdx.json \
             "shlink-web-client-${RELEASE_VERSION}.digest.txt" \
+            --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "Creator Signal v$RELEASE_VERSION" \
             --notes-file release-notes.md \
