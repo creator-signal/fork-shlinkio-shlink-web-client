@@ -4,7 +4,7 @@
   "releaseBranch": "creator-signal/main",
   "tagPrefix": "creator-signal-v",
   "image": "ghcr.io/creator-signal/shlink-web-client",
-  "releaseVersion": "4.8.1-cs.1",
+  "releaseVersion": "4.8.1-cs.2",
   "requiredEvidence": [
     "oidc-authorization-code-pkce",
     "zitadel-role-enforcement",

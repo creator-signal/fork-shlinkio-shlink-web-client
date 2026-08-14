@@ -71,8 +71,10 @@ Deploy with a read-only root filesystem, `/tmp` tmpfs, dropped Linux capabilitie
 
 ## Validation and release
 
-`config/creator-signal-compatibility.json` binds `4.8.1-cs.1` to Shlink `>=5.2.0-cs.1 <6.0.0` and REST v3. CI runs style, browser and Node type checks, browser coverage, adversarial BFF tests, dependency/secret/config scans, the compiled-browser boundary scan, amd64 vulnerability scanning, and an arm64 build proof.
+`config/creator-signal-compatibility.json` binds `4.8.1-cs.2` to Shlink `>=5.2.0-cs.1 <6.0.0` and REST v3. CI runs style, browser and Node type checks, browser coverage, adversarial BFF tests, dependency/secret/config scans, the compiled-browser boundary scan, amd64 vulnerability scanning, and an arm64 build proof.
 
-The governed release workflow runs only from exact `creator-signal/main`, matches the requested version to both repository manifests, refuses existing tags/images, rebuilds and scans both architectures, and stages every image archive and SPDX SBOM under a repository-relative directory so downloaded artifacts have the deterministic flat layout used by the publish job. It emits GitHub OIDC provenance, publishes `ghcr.io/creator-signal/shlink-web-client`, then creates `creator-signal-v4.8.1-cs.1` and the GitHub release last. It never publishes `latest`.
+The governed release workflow runs only from exact `creator-signal/main`, matches the requested version to both repository manifests, refuses existing tags/images, rebuilds and scans both architectures, and stages every image archive and SPDX SBOM under a repository-relative directory so downloaded artifacts have the deterministic flat layout used by the publish job. It emits GitHub OIDC provenance, publishes `ghcr.io/creator-signal/shlink-web-client`, then creates `creator-signal-v4.8.1-cs.2` and the GitHub release last. It never publishes `latest`.
+
+`4.8.1-cs.1` is a retired partial registry publication from an aborted release transaction. It has no supported GitHub release and must not be deployed, deleted, retagged or overwritten. `4.8.1-cs.2` is the first supported Creator Signal web-client release.
 
 A fork release is not production deployment authorization. The stack still requires STAGE OIDC/browser acceptance, preserved-data Shlink migration/backup/restore evidence, and an explicitly approved production promotion.
